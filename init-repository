@@ -308,6 +308,7 @@ sub git_clone_all_submodules
     foreach my $line (@submodconfig) {
         # Example line: submodule.qtqa.url=../qtqa.git
         next if ($line !~ /^submodule\.([^.=]+)\.([^.=]+)=(.*)$/);
+        
         if ($2 eq "path") {
             $subdirs{$1} = $3;
         } elsif ($2 eq "branch") {
@@ -316,7 +317,8 @@ sub git_clone_all_submodules
             my ($mod, $base) = ($1, $3);
             next if ($base !~ /^\.\.\//);
             $base = $my_repo_base.'/'.$base;
-            while ($base =~ s,/(?!\.\./)[^/]+/\.\./,/,g) {}
+            # while ($base =~ s,/(?!\.\./)[^/]+/\.\./,/,g) {} # strip instances of '/dir/../' replace with '/'
+            while ($base =~ s,(?!\.\./)[^/]+/\.\./,,g) {} # strip instances of 'dir/../' replace with ''
             $subbases{$mod} = $base;
         } elsif ($2 eq "update") {
             push @subset, '-'.$1 if ($3 eq 'none');
@@ -638,12 +640,12 @@ sub run
     chomp(my $url = `git config remote.origin.url`);
     die("Have no origin remote.\n") if (!$url);
     $url =~ s,\.git$,,;
-    $url =~ s,qt/qt5$,,;
+    $url =~ s,qt5$,,;
     $self->{'base-url'} = $url;
 
-    $self->git_clone_all_submodules('qt/qt5', $self->{branch}, @{$self->{'module-subset'}});
+    $self->git_clone_all_submodules('qt5', $self->{branch}, @{$self->{'module-subset'}});
 
-    $self->git_add_remotes('qt/qt5');
+    $self->git_add_remotes('qt5');
 
     $self->git_install_hooks;
 
